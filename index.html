@@ -207,7 +207,7 @@
 
   <script>
     const SUPABASE_URL = "https://dflzemseyregfcwszkqv.supabase.co";
-    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"; // Paste your anon key here
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbHplbXNleXJlZ2Zjd3N6a3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTQyMTksImV4cCI6MjEwNzAzMDIxOX0.RkQmGQQqM0u37Vc9RmP4h42lhpbzqc4p_HCqXjCTf9Q"; // Paste your anon key here
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let catalog = [];
@@ -412,48 +412,4 @@
     }
 
     async function searchNearbyStock() {
-      const itemId = document.getElementById('c-search-item').value;
-      const areaFilter = document.getElementById('c-filter-area').value;
-      const customer = JSON.parse(localStorage.getItem('spotit_customer') || '{}');
-      const resultsDiv = document.getElementById('customer-results');
-      resultsDiv.innerHTML = '<p style="color:var(--muted); font-size:13px;">Searching...</p>';
-
-      const { data, error } = await client.from('shop_inventory').select('in_stock, shops(id, shop_name, phone, area)').eq('item_id', itemId).eq('in_stock', true);
-      if (error) return resultsDiv.innerHTML = `<p style="color:var(--danger);">${error.message}</p>`;
-
-      let list = (data || []).map(d => d.shops).filter(Boolean);
-      if (areaFilter !== 'ALL') {
-        list = list.filter(s => s.area === areaFilter);
-      } else if (customer.area) {
-        list.sort((a,b) => (a.area === customer.area ? -1 : 1));
-      }
-
-      if (list.length === 0) {
-        resultsDiv.innerHTML = '<p style="color:var(--danger); font-size:13px;">No stores currently have this in stock.</p>';
-        return;
-      }
-
-      let html = `<div style="font-weight:700; font-size:13px; margin-bottom:8px;">Available at ${list.length} store(s):</div>`;
-      list.forEach(s => {
-        const near = s.area === customer.area;
-        html += `
-          <div class="shop-result-card ${near ? 'nearest' : ''}">
-            ${near ? '<span class="near-badge">📍 Nearest to Your House</span>' : ''}
-            <div style="font-weight:700; font-size:15px; color:#1e40af;">${s.shop_name}</div>
-            <div style="font-size:12px; color:var(--muted);">Area: <b>${s.area}</b></div>
-            <a href="tel:${s.phone}" class="call-btn">📞 Call ${s.phone}</a>
-          </div>
-        `;
-      });
-      resultsDiv.innerHTML = html;
-    }
-
-    function logout() {
-      if (confirm('Switch profile or logout?')) {
-        localStorage.clear();
-        showScreen('screen-welcome');
-      }
-    }
-  </script>
-</body>
-</html>
+      const itemId = document.getElementById('c-search-ite
