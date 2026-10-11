@@ -141,7 +141,7 @@
       </div>
 
       <label>Your Live Stock List (Tap to toggle)</label>
-      <div class="inventory-list" id="v-items-container">Loading...</div>
+      <div class="inventory-list" id="v-items-container">Loading items...</div>
       <button class="btn btn-primary" onclick="syncVendorStock()">Save & Update Stock</button>
     </div>
 
@@ -207,7 +207,7 @@
 
   <script>
     const SUPABASE_URL = "https://dflzemseyregfcwszkqv.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbHplbXNleXJlZ2Zjd3N6a3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTQyMTksImV4cCI6MjEwNzAzMDIxOX0.RkQmGQQqM0u37Vc9RmP4h42lhpbzqc4p_HCqXjCTf9Q"; // Paste your anon key here
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmbHplbXNleXJlZ2Zjd3N6a3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NTQyMTksImV4cCI6MjEwNzAzMDIxOX0.RkQmGQQqM0u37Vc9RmP4h42lhpbzqc4p_HCqXjCTf9Q";
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let catalog = [];
@@ -406,10 +406,4 @@
       filtered.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
-        opt.innerText = `${getIcon(item.category)} ${item.name}`;
-        select.appendChild(opt);
-      });
-    }
-
-    async function searchNearbyStock() {
-      const itemId = document.getElementById('c-search-ite
+        opt.innerText = `${getIcon(item.category)} 
