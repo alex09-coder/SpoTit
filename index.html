@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +40,7 @@
     .btn-secondary { background: #059669; color: white; }
     .btn-outline { background: #f1f5f9; color: var(--text); margin-top: 8px; }
     .role-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-    .role-btn { padding: 16px; border-radius: var(--radius); border: 2px solid var(--border); background: white; cursor: pointer; }
+    .role-btn { padding: 16px; border-radius: var(--radius); border: 2px solid var(--border); background: white; cursor: pointer; text-align: left; }
     .role-btn:active { border-color: var(--primary); background: #eff6ff; }
     .role-btn h4 { margin: 0 0 4px; font-size: 15px; }
     .role-btn p { margin: 0; font-size: 12px; color: var(--muted); }
@@ -74,14 +75,14 @@
       <h3 style="margin-top:0;">Welcome to SpoTit</h3>
       <p style="color:var(--muted); font-size:13px;">Select your role to get started:</p>
       <div class="role-grid">
-        <div class="role-btn" onclick="startFlow('vendor')">
+        <button type="button" class="role-btn" onclick="goToScreen('screen-vendor-setup')">
           <h4>🏪 Shop Owner (Vendor)</h4>
           <p>Manage categories, add your store items & live stock status.</p>
-        </div>
-        <div class="role-btn" onclick="startFlow('customer')">
+        </button>
+        <button type="button" class="role-btn" onclick="goToScreen('screen-customer-setup')">
           <h4>👤 Customer</h4>
           <p>Find items near your house and get direct contact details.</p>
-        </div>
+        </button>
       </div>
     </div>
 
@@ -112,7 +113,7 @@
         <option value="Old Guntur">Old Guntur</option>
       </select>
       <button class="btn btn-primary" onclick="completeVendorRegistration()">Save & Go to Dashboard</button>
-      <button class="btn btn-outline" onclick="showScreen('screen-welcome')">Back</button>
+      <button class="btn btn-outline" onclick="goToScreen('screen-welcome')">Back</button>
     </div>
 
     <!-- 3. Vendor Home -->
@@ -163,7 +164,7 @@
         <option value="Old Guntur">Old Guntur</option>
       </select>
       <button class="btn btn-secondary" onclick="completeCustomerRegistration()">Save & Start Finding</button>
-      <button class="btn btn-outline" onclick="showScreen('screen-welcome')">Back</button>
+      <button class="btn btn-outline" onclick="goToScreen('screen-welcome')">Back</button>
     </div>
 
     <!-- 5. Customer Home -->
@@ -215,32 +216,49 @@
     let currentVendorCategory = 'All';
     let currentCustomerCategory = 'All';
 
-    const screens = ['screen-welcome','screen-vendor-setup','screen-vendor-home','screen-customer-setup','screen-customer-home'];
+    const allScreens = ['screen-welcome','screen-vendor-setup','screen-vendor-home','screen-customer-setup','screen-customer-home'];
 
-    function showScreen(id) {
-      screens.forEach(s => document.getElementById(s)?.classList.add('hidden'));
-      document.getElementById(id)?.classList.remove('hidden');
+    function goToScreen(screenId) {
+      allScreens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      const target = document.getElementById(screenId);
+      if (target) target.classList.remove('hidden');
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-      await fetchCatalog();
+      // Direct screen transition works even if network is slow
+      goToScreen('screen-welcome');
+
+      try {
+        await fetchCatalog();
+      } catch (e) {
+        console.error('Catalog load error', e);
+      }
+
       const role = localStorage.getItem('spotit_role');
       if (role === 'vendor') {
         const v = JSON.parse(localStorage.getItem('spotit_vendor') || '{}');
-        if (v && v.phone) return openVendorHome(v);
+        if (v && v.phone) {
+          openVendorHome(v);
+          return;
+        }
       } else if (role === 'customer') {
         const c = JSON.parse(localStorage.getItem('spotit_customer') || '{}');
-        if (c && c.name) return openCustomerHome(c);
+        if (c && c.name) {
+          openCustomerHome(c);
+          return;
+        }
       }
-      showScreen('screen-welcome');
     });
 
-    function startFlow(role) {
-      showScreen(role === 'vendor' ? 'screen-vendor-setup' : 'screen-customer-setup');
-    }
-
     async function fetchCatalog() {
-      const { data } = await client.from('master_items').select('*').order('name');
+      const { data, error } = await client.from('master_items').select('*').order('name');
+      if (error) {
+        console.error('Database Error:', error.message);
+        return;
+      }
       catalog = data || [];
     }
 
@@ -257,7 +275,7 @@
         shop_name: name, owner_name: owner || name, phone: phone, area: area
       }, { onConflict: 'phone' }).select().single();
 
-      if (error) return alert('Error: ' + error.message);
+      if (error) return alert('Shop save error: ' + error.message);
 
       localStorage.setItem('spotit_role', 'vendor');
       localStorage.setItem('spotit_vendor', JSON.stringify({ ...data, category }));
@@ -268,6 +286,8 @@
       document.getElementById('v-display-title').innerText = `Hello, ${vendor.shop_name} 👋`;
       document.getElementById('v-display-sub').innerText = `Area: ${vendor.area} • Ph: ${vendor.phone}`;
 
+      if (catalog.length === 0) await fetchCatalog();
+
       const { data: invData } = await client.from('shop_inventory').select('item_id, in_stock').eq('shop_id', vendor.id);
       const invMap = {};
       if (invData) invData.forEach(r => invMap[r.item_id] = r.in_stock);
@@ -277,7 +297,7 @@
       });
 
       renderVendorItems();
-      showScreen('screen-vendor-home');
+      goToScreen('screen-vendor-home');
     }
 
     function renderVendorItems() {
@@ -286,7 +306,7 @@
       const filtered = catalog.filter(it => currentVendorCategory === 'All' || (it.category && it.category.toLowerCase() === currentVendorCategory.toLowerCase()));
 
       if (filtered.length === 0) {
-        list.innerHTML = '<p style="font-size:13px; color:var(--muted);">No items in this category. Type item name above to add!</p>';
+        list.innerHTML = '<p style="font-size:13px; color:var(--muted); padding:10px;">No items yet in this category. Type item name above to add!</p>';
         return;
       }
 
@@ -355,7 +375,7 @@
       localStock[data.id] = true;
       input.value = '';
       renderVendorItems();
-      alert(`"${val}" has been added to catalog!`);
+      alert(`"${val}" has been added!`);
     }
 
     async function syncVendorStock() {
@@ -385,25 +405,15 @@
       openCustomerHome(customer);
     }
 
-    function openCustomerHome(customer) {
+    async function openCustomerHome(customer) {
       document.getElementById('c-display-title').innerText = `Hello, ${customer.name} 👋`;
       document.getElementById('c-display-sub').innerText = `House: ${customer.area}`;
+      if (catalog.length === 0) await fetchCatalog();
       renderCustomerDropdown();
-      showScreen('screen-customer-home');
+      goToScreen('screen-customer-home');
     }
 
     function filterCustomerCategory(cat, el) {
       currentCustomerCategory = cat;
       document.querySelectorAll('#screen-customer-home .chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      renderCustomerDropdown();
-    }
-
-    function renderCustomerDropdown() {
-      const select = document.getElementById('c-search-item');
-      select.innerHTML = '';
-      const filtered = catalog.filter(it => currentCustomerCategory === 'All' || (it.category && it.category.toLowerCase() === currentCustomerCategory.toLowerCase()));
-      filtered.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.innerText = `${getIcon(item.category)} 
+      el.
